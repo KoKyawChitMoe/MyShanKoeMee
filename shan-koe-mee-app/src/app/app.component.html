@@ -1,0 +1,67 @@
+<div class="poker-table-container">
+  <div class="table-felt" #tableFelt></div>
+
+  <div *ngFor="let player of players" class="player" [ngClass]="player.positionClass">
+    <div class="avatar">
+      <img [src]="player.avatar" [alt]="player.name">
+      <div class="player-cards">
+        <div *ngFor="let card of player.cards; let i = index"
+             class="card"
+             [ngClass]="{'card-1': i === 0, 'card-2': i === 1, 'revealed-card': card.isRevealed}"
+             [ngStyle]="{'transform': 'translate(' + card.translateX + 'px, ' + card.translateY + 'px) rotate(' + (i === 0 ? '-8deg' : '6deg') + ')'}"
+             (mousedown)="handleCardClick(player, card, i, $event)"
+             (touchstart)="onTouchStart($event, player, card, i)"
+             (touchmove)="onTouchMove($event, player, card, i)"
+             (touchend)="onTouchEnd($event, player, card, i)"
+             [style.cursor]="i === 1 && !card.isRevealed && player.id === 1 ? 'grab' : 'default'">
+          <div class="card-face card-front" [ngClass]="{'revealed': card.isRevealed}">
+            <div class="rank">{{ card.rank }}</div>
+            <div class="suit" [ngClass]="{'hearts': card.suit === '♥', 'diamonds': card.suit === '♦', 'spades': card.suit === '♠', 'clubs': card.suit === '♣'}">{{ card.suit }}</div>
+          </div>
+          <div class="card-face card-back" [ngClass]="{'revealed': card.isRevealed}">
+            <img [src]="card.backImage" alt="Card Back">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="username">{{ player.name }}</div>
+    <div class="balance">{{ player.balance | number }}</div>
+    <div class="card-points" *ngIf="player.points" [class.points-animation]="player.points">{{ player.points }}</div>
+    <div class="player-choice" *ngIf="player.choice">{{ player.choice }}</div>
+  </div>
+
+  <div class="dealer">
+    <div class="chair">
+      <img src="/assets/images/chair.png" alt="Chair">
+    </div>
+    <div class="avatar">
+      <img [src]="dealer.avatar" [alt]="dealer.name">
+    </div>
+  </div>
+
+  <div class="game-info">
+    <div class="top-middle">SHWE SHAN</div>
+  </div>
+
+  <div class="countdown" *ngIf="isCountingDown" [class.countdown-animation]="isCountingDown">
+    {{ countdown }}
+  </div>
+
+  <div class="pot-amount">
+    Pot: {{ potAmount | number }}
+  </div>
+
+  <div class="choice-section" *ngIf="showChoiceSection">
+    <button (click)="makeChoice('တော်ပြီ')" [disabled]="isDealing || isShuffling">တော်ပြီ</button>
+    <button (click)="makeChoice('ထပ်ဆွဲမယ်')" [disabled]="isDealing || isShuffling">ထပ်ဆွဲမယ်</button>
+  </div>
+
+  <div class="game-controls-bottom">
+    <div class="betting-section">
+      <label for="betSlider">ထိုးကြေး:</label>
+      <input type="range" min="1000" max="100000" step="1000" [(ngModel)]="currentBetAmount" (input)="updateBetAmountFromSlider()" class="bet-slider" #betAmountSlider [disabled]="!isBettingPhase">
+      <span class="current-bet-display">{{ currentBetAmount | number }}</span>
+      <button (click)="placeBet()" [disabled]="currentBetAmount === 0 || !isBettingPhase || isDealing || isShuffling">ထိုးမယ်</button>
+    </div>
+  </div>
+</div>
