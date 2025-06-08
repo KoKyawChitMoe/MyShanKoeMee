@@ -67,6 +67,7 @@ export class AppComponent implements AfterViewInit {
   cardDealingInterval: any;
   showChoiceSection = false;
   touchStartX = 0;
+  touchDeltaX = 0;
   revealTimeout: any;
 
   @ViewChild('betAmountSlider') betAmountSliderRef!: ElementRef<HTMLInputElement>;
@@ -103,6 +104,7 @@ export class AppComponent implements AfterViewInit {
     this.isBettingPhase = false;
     this.currentBetAmount = 0;
     this.showChoiceSection = false;
+    this.touchDeltaX = 0;
     clearInterval(this.cardDealingInterval);
     clearTimeout(this.revealTimeout);
   }
@@ -246,7 +248,7 @@ export class AppComponent implements AfterViewInit {
       const cardElement = document.querySelector(`.${player.positionClass} .card-${index + 1}`) as HTMLElement;
       if (cardElement) {
         this.renderer.setStyle(cardElement, 'position', 'absolute');
-        this.renderer.setStyle(cardElement, 'left', `${centerX + (index * 60 - 22)}px`);
+        this.renderer.setStyle(cardElement, 'left', `${centerX + (index * 16 - 3)}px`);
         this.renderer.setStyle(cardElement, 'top', `${centerY}px`);
         this.renderer.setStyle(cardElement, 'width', '170px');
         this.renderer.setStyle(cardElement, 'height', '260px');
@@ -261,8 +263,13 @@ export class AppComponent implements AfterViewInit {
     if (secondCardElement) {
       secondCardElement.addEventListener('click', () => {
         if (!secondCard.isRevealed) {
-          secondCard.isRevealed = true;
-          this.showChoiceSection = true;
+          this.renderer.setStyle(secondCardElement, 'transition', 'left 0.5s ease-in-out');
+          this.renderer.setStyle(secondCardElement, 'left', `${centerX + (1 * 16 - 3) + 50}px`);
+          setTimeout(() => {
+            secondCard.isRevealed = true;
+            this.showChoiceSection = true;
+            this.renderer.setStyle(secondCardElement, 'transition', 'all 0.5s ease-in-out');
+          }, 500);
         }
       });
     }
@@ -281,7 +288,6 @@ export class AppComponent implements AfterViewInit {
         this.showChoiceSection = false;
         koKyawGyi.points = this.getCardPoints(koKyawGyi.cards);
         koKyawGyi.pointsValue = this.getPointsValue(koKyawGyi.points);
-        // Move cards back to player's area
         this.moveCardsBackToPlayer(koKyawGyi);
       } else if (choice === 'ထပ်ဆွဲမယ်') {
         this.showChoiceSection = false;
@@ -298,8 +304,7 @@ export class AppComponent implements AfterViewInit {
             this.renderer.setStyle(tempCardElement, 'height', '300px');
             this.renderer.appendChild(document.body, tempCardElement);
 
-            // Position the third card in the center, aligned with the first two
-            const targetX = centerX + (2 * 150 - 80); // Third card at index 2
+            const targetX = centerX + (2 * 150 - 80);
             const targetY = centerY;
 
             this.renderer.setStyle(tempCardElement, 'transition', 'all 0.5s ease-in-out');
@@ -316,7 +321,6 @@ export class AppComponent implements AfterViewInit {
                 translateY: 0
               });
 
-              // Position the third card in the center immediately
               const newCardElement = document.querySelector(`.${koKyawGyi.positionClass} .card-3`) as HTMLElement;
               if (newCardElement) {
                 this.renderer.setStyle(newCardElement, 'position', 'absolute');
@@ -332,10 +336,9 @@ export class AppComponent implements AfterViewInit {
               koKyawGyi.points = this.getCardPoints(koKyawGyi.cards);
               koKyawGyi.pointsValue = this.getPointsValue(koKyawGyi.points);
 
-              // Move all cards back to player's area after points are calculated
               setTimeout(() => {
                 this.moveCardsBackToPlayer(koKyawGyi);
-              }, 2000); // Delay to show points before moving back
+              }, 2000);
             }, 500);
           }
         }
@@ -351,7 +354,7 @@ export class AppComponent implements AfterViewInit {
         const playerCardsContainer = playerElement.querySelector('.player-cards') as HTMLElement;
         const playerCardsRect = playerCardsContainer.getBoundingClientRect();
         this.renderer.setStyle(cardElement, 'position', 'absolute');
-        this.renderer.setStyle(cardElement, 'left', `${index * 7 - 5}px`); // Adjusted for fanned-out row
+        this.renderer.setStyle(cardElement, 'left', `${index * 7 - 5}px`);
         this.renderer.setStyle(cardElement, 'top', '0px');
         this.renderer.setStyle(cardElement, 'width', '30px');
         this.renderer.setStyle(cardElement, 'height', '45px');
@@ -371,7 +374,7 @@ export class AppComponent implements AfterViewInit {
           const playerCardsContainer = playerElement.querySelector('.player-cards') as HTMLElement;
           const playerCardsRect = playerCardsContainer.getBoundingClientRect();
           this.renderer.setStyle(cardElement, 'position', 'absolute');
-          this.renderer.setStyle(cardElement, 'left', `${index * 7 - 5}px`); // Adjusted for fanned-out row
+          this.renderer.setStyle(cardElement, 'left', `${index * 7 - 5}px`);
           this.renderer.setStyle(cardElement, 'top', '0px');
           this.renderer.setStyle(cardElement, 'width', '30px');
           this.renderer.setStyle(cardElement, 'height', '45px');
@@ -494,8 +497,17 @@ export class AppComponent implements AfterViewInit {
 
   handleCardClick(player: Player, card: Card, cardIndex: number, event: MouseEvent) {
     if (cardIndex === 1 && !card.isRevealed && player.isTurn && player.id === 1) {
-      card.isRevealed = true;
-      this.showChoiceSection = true;
+      const secondCardElement = document.querySelector(`.${player.positionClass} .card-2`) as HTMLElement;
+      if (secondCardElement) {
+        const currentLeft = parseFloat(secondCardElement.style.left) || (cardIndex * 60 - 22);
+        this.renderer.setStyle(secondCardElement, 'transition', 'left 0.5s ease-in-out');
+        this.renderer.setStyle(secondCardElement, 'left', `${currentLeft + 50}px`);
+        setTimeout(() => {
+          card.isRevealed = true;
+          this.showChoiceSection = true;
+          this.renderer.setStyle(secondCardElement, 'transition', 'all 0.5s ease-in-out');
+        }, 500);
+      }
     }
   }
 
@@ -510,11 +522,13 @@ export class AppComponent implements AfterViewInit {
   onTouchMove(event: TouchEvent, player: Player, card: Card, cardIndex: number) {
     if (card.isDragging && cardIndex === 1 && !card.isRevealed && player.isTurn && player.id === 1) {
       const touchX = event.touches[0].clientX;
-      const deltaX = touchX - this.touchStartX;
-      if (deltaX > 50) {
-        card.isRevealed = true;
-        card.isDragging = false;
-        this.showChoiceSection = true;
+      this.touchDeltaX = touchX - this.touchStartX;
+      const secondCardElement = document.querySelector(`.${player.positionClass} .card-2`) as HTMLElement;
+      if (secondCardElement) {
+        const currentLeft = parseFloat(secondCardElement.style.left) || (cardIndex * 60 - 22);
+        const newLeft = currentLeft + this.touchDeltaX;
+        this.renderer.setStyle(secondCardElement, 'transition', 'none');
+        this.renderer.setStyle(secondCardElement, 'left', `${newLeft}px`);
       }
     }
   }
@@ -522,6 +536,23 @@ export class AppComponent implements AfterViewInit {
   onTouchEnd(event: TouchEvent, player: Player, card: Card, cardIndex: number) {
     if (card.isDragging && cardIndex === 1 && !card.isRevealed && player.isTurn && player.id === 1) {
       card.isDragging = false;
+      const secondCardElement = document.querySelector(`.${player.positionClass} .card-2`) as HTMLElement;
+      if (secondCardElement) {
+        const currentLeft = parseFloat(secondCardElement.style.left) || (cardIndex * 60 - 22);
+        if (this.touchDeltaX >= 50 && this.touchDeltaX <= 100) {
+          this.renderer.setStyle(secondCardElement, 'transition', 'left 0.5s ease-in-out');
+          this.renderer.setStyle(secondCardElement, 'left', `${currentLeft + 50 - this.touchDeltaX}px`);
+          setTimeout(() => {
+            card.isRevealed = true;
+            this.showChoiceSection = true;
+            this.renderer.setStyle(secondCardElement, 'transition', 'all 0.5s ease-in-out');
+          }, 500);
+        } else {
+          this.renderer.setStyle(secondCardElement, 'transition', 'left 0.5s ease-in-out');
+          this.renderer.setStyle(secondCardElement, 'left', `${currentLeft - this.touchDeltaX}px`);
+        }
+      }
+      this.touchDeltaX = 0;
     }
   }
 }
